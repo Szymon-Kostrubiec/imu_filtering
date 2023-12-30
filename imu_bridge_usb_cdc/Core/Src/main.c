@@ -28,8 +28,9 @@
 /* USER CODE BEGIN Includes */
 #include <string.h>
 #include <iso646.h>
+#include <stdbool.h>
 
-#include "driver_mpu9250_basic.h"
+#include "mpu9250.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,13 +51,20 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t read_sensor = 1;
+bool read_gyro_time = false;
+bool read_acc_time = false;
+bool read_mag_time = false;
+
+bool uart_busy = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim);
+void HAL_UART_TxCpltCallback([[maybe_unused]] UART_HandleTypeDef* huart) {
+  uart_busy = false;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -96,37 +104,69 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   MX_TIM2_Init();
+  MX_TIM6_Init();
+  MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
+  float mag_adjustment[3];
+  mpu9250_init(mag_adjustment);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint32_t measurements_so_far = 0;
-  float degrees;
-  uint32_t i = 0;
-  mpu9250_address_t address = MPU9250_ADDRESS_AD0_LOW;
-  uint8_t res = mpu9250_basic_init(MPU9250_INTERFACE_SPI, address);
-  uint8_t measurements_message_buffer[23];
-  measurements_message_buffer[0] = '$'; // start bit
-  measurements_message_buffer[1] = '$';
-  measurements_message_buffer[22] = '\n';
-  // must be compiled with -fno-strict-aliasing !!!
-  int16_t * measurements = &(measurements_message_buffer[2]);
 
   HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_Base_Start_IT(&htim6);
+  HAL_TIM_Base_Start_IT(&htim7);
+  HAL_Delay(100);
   while (1)
   {
-	  if (read_sensor) {
-		  read_sensor = 0;
-		  if (mpu9250_basic_read(measurements) not_eq 0) {
-			  Error_Handler();
-	  	  }
-		  if (mpu9250_basic_read_temperature(measurements + 9, &degrees) not_eq 0) {
-			  Error_Handler();
-		  }
-		  measurements_so_far++;
-		  HAL_UART_Transmit_DMA(&huart2, measurements_message_buffer, 23);
-	  }
+    if (read_gyro_time) {
+      u8 message_buffer[1 + 4 * 3 + 1];
+      message_buffer[0] = 1;
+      message_buffer[13] = '\n';
+
+      i16 gyro[3];
+      read_gyro(gyro);
+      float gyro_f[3];
+      for (int i = 0; i < 3; i++) {
+        gyro_f[i] = gyro[i] / 131.0f;
+      }
+
+      memcpy(message_buffer + 1, gyro_f, 4 * 3);
+
+      while (uart_busy) ;
+      HAL_UART_Transmit_DMA(&huart2, message_buffer, sizeof(message_buffer));
+    }
+    if (read_acc_time) {
+      u8 message_buffer[1 + 4 * 3 + 1];
+      message_buffer[0] = 2;
+      message_buffer[13] = '\n';
+      i16 acc[3];
+      read_acc(acc);
+      float acc_f[3];
+      for (int i = 0; i < 3; i++) {
+        acc_f[i] = acc[i] / 16384.0f;
+      }
+      memcpy(message_buffer + 1, acc_f, 4 * 3);
+      while(uart_busy) ;
+      HAL_UART_Transmit_DMA(&huart2, message_buffer, sizeof(message_buffer));
+
+    }
+    if (read_mag_time) {
+      u8 message_buffer[1 + 4 * 3 + 1];
+      message_buffer[0] = 3;
+      message_buffer[13] = '\n';
+      i16 mag_raw[3];
+      if (read_mag(mag_raw)) {
+    	  float mag[3];
+      	  for (int i = 0; i < 3; i++) {
+    	  	  mag_raw[i] = mag[i] * mag_adjustment[i];
+      	  }
+      	  memcpy(message_buffer + 1, mag, 4 * 3);
+      	  while(uart_busy) ;
+      	  HAL_UART_Transmit_DMA(&huart2, message_buffer, sizeof(message_buffer));
+      }
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -196,7 +236,13 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
-	read_sensor = 1;
+	if (htim == &htim2) {
+		read_gyro_time = true;
+	} else if (htim == &htim6) {
+		read_acc_time = true;
+	} else if (htim == &htim7) {
+		read_mag_time = true;
+	}
 }
 /* USER CODE END 4 */
 
