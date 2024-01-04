@@ -107,6 +107,9 @@ int main(void)
   MX_TIM6_Init();
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
+//  u8 buff[10];
+//  memset(buff, '$', 10);
+//  HAL_UART_Transmit(&huart2, buff, 10, HAL_MAX_DELAY);
   float mag_adjustment[3];
   mpu9250_init(mag_adjustment);
   /* USER CODE END 2 */
@@ -122,7 +125,7 @@ int main(void)
   {
     if (read_gyro_time) {
       u8 message_buffer[1 + 4 * 3 + 1];
-      message_buffer[0] = 1;
+      message_buffer[0] = '$';
       message_buffer[13] = '\n';
 
       i16 gyro[3];
@@ -138,9 +141,10 @@ int main(void)
       HAL_UART_Transmit_DMA(&huart2, message_buffer, sizeof(message_buffer));
     }
     if (read_acc_time) {
-      u8 message_buffer[1 + 4 * 3 + 1];
-      message_buffer[0] = 2;
+      u8 message_buffer[2 + 4 * 3 + 1];
+      message_buffer[0] = '#';
       message_buffer[13] = '\n';
+
       i16 acc[3];
       read_acc(acc);
       float acc_f[3];
@@ -152,21 +156,21 @@ int main(void)
       HAL_UART_Transmit_DMA(&huart2, message_buffer, sizeof(message_buffer));
 
     }
-    if (read_mag_time) {
-      u8 message_buffer[1 + 4 * 3 + 1];
-      message_buffer[0] = 3;
-      message_buffer[13] = '\n';
-      i16 mag_raw[3];
-      if (read_mag(mag_raw)) {
-    	  float mag[3];
-      	  for (int i = 0; i < 3; i++) {
-    	  	  mag_raw[i] = mag[i] * mag_adjustment[i];
-      	  }
-      	  memcpy(message_buffer + 1, mag, 4 * 3);
-      	  while(uart_busy) ;
-      	  HAL_UART_Transmit_DMA(&huart2, message_buffer, sizeof(message_buffer));
-      }
-    }
+//    if (read_mag_time) {
+//      u8 message_buffer[1 + 4 * 3 + 1];
+//      message_buffer[0] = 3;
+//      message_buffer[13] = '\n';
+//      i16 mag_raw[3];
+//      if (read_mag(mag_raw)) {
+//    	  float mag[3];
+//      	  for (int i = 0; i < 3; i++) {
+//    	  	  mag_raw[i] = mag[i] * mag_adjustment[i];
+//      	  }
+//      	  memcpy(message_buffer + 1, mag, 4 * 3);
+//      	  while(uart_busy) ;
+//      	  HAL_UART_Transmit_DMA(&huart2, message_buffer, sizeof(message_buffer));
+//      }
+//    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -24,6 +24,8 @@ void mpu9250_init(float mag_adjustment[3]) {
 	spi_write(PWR_MGMT_1, 0x00); // clear sleep bit
 	spi_write(GYRO_CONFIG, GYRO_FS_SEL_250);
 
+	HAL_Delay(100); // let the sensor wake up
+
 	u8 who_ami_i = spi_read(WHO_AM_I);
 	assert(who_ami_i == 0x71);
 
@@ -161,14 +163,14 @@ static void init_ak8963() {
 
 //	 reset ak8963
 	ak8963_write(AK8963_CNTL2, 0x01);
-	HAL_Delay(50);
+	HAL_Delay(300);
 
 	u8 id = ak8963_read(0x0);
 	assert(id == 0x48);
 
 	// set continuous measurement mode 2
 	HAL_Delay(100);
-	HAL_Delay(20);
+
 	ak8963_write(AK8963_CNTL1, 0x16);
 	HAL_Delay(100);
 

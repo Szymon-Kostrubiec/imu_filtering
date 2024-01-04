@@ -2,7 +2,7 @@ import serial
 import struct
 import socket
 
-port = serial.Serial("COM5", baudrate=250000, timeout=3.0)
+port = serial.Serial("COM5", baudrate=500000, timeout=3.0)
 
 udp_host = 'localhost'
 udp_port = 5555
