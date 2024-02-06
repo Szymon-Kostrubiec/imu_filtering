@@ -1,9 +1,0 @@
-../Core/Src/mpu9250.c:23:6:mpu9250_init	4
-../Core/Src/mpu9250.c:47:6:read_gyro	1
-../Core/Src/mpu9250.c:62:6:read_acc	1
-../Core/Src/mpu9250.c:77:4:read_mag	3
-../Core/Src/mpu9250.c:103:11:spi_read	1
-../Core/Src/mpu9250.c:120:13:spi_write	1
-../Core/Src/mpu9250.c:145:13:ak8963_write	1
-../Core/Src/mpu9250.c:152:11:ak8963_read	1
-../Core/Src/mpu9250.c:159:13:init_ak8963	1
