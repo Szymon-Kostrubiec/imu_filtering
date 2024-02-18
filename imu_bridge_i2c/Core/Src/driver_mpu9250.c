@@ -4106,14 +4106,14 @@ uint8_t mpu9250_init(mpu9250_handle_t *handle)
     {
         handle->debug_print("mpu9250: read who am i failed.\n");                    /* read who am I failed */
         (void)a_mpu9250_deinit(handle);                                             /* iic or spi deinit */
-        
+
         return 5;                                                                   /* return error */
     }
     if (prev != 0x71)                                                               /* check the id */
     {
         handle->debug_print("mpu9250: id is invalid.\n");                           /* id is invalid */
         (void)a_mpu9250_deinit(handle);                                             /* iic or spi deinit */
-        
+
         return 5;                                                                   /* return error */
     }
     

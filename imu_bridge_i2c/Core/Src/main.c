@@ -54,9 +54,9 @@
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim);
-bool acc_read;
-bool gyro_read;
-bool mag_read;
+bool read_acc;
+bool read_gyro;
+bool read_mag;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -99,32 +99,30 @@ int main(void)
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
   mpu9250_address_t addr = MPU9250_ADDRESS_AD0_LOW;
+  HAL_Delay(100);
   uint8_t res = mpu9250_basic_init(MPU9250_INTERFACE_IIC, addr);
-  float g[3];
-  float dps[3];
-  float ut[3];
-  float degrees;
+  float measurements[9];
+  HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    if (mpu9250_basic_read(g, dps, ut) != 0)
-    {
-        (void)mpu9250_basic_deinit();
-        return 1;
-    }
-    if (mpu9250_basic_read_temperature(&degrees) != 0)
-    {
-        (void)mpu9250_basic_deinit();
-        return 1;
-    }
+	uint8_t start_byte = '$';
+	if (read_acc) {
+		read_acc = false;
+		if (mpu9250_basic_read(measurements, measurements + 3, measurements + 6) != 0)
+		{
+			(void)mpu9250_basic_deinit();
+			return 1;
+		}
+	HAL_UART_Transmit(&huart2, &start_byte, 1, 100);
+	HAL_UART_Transmit(&huart2, (uint8_t*)measurements, sizeof(measurements), 100);
+	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-    HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
@@ -191,13 +189,7 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
-	if (htim == TIM2) {
-		read_acc = true;
-	} else if (htim == TIM6) {
-		read_gyro = true;
-	} else { // TIM7
-		read_mag = true;
-	}
+	read_acc = true;
 }
 
 /* USER CODE END 4 */

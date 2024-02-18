@@ -52,7 +52,7 @@
 ../Core/Src/driver_mpu9250.c:3943:9:mpu9250_get_interface	2
 ../Core/Src/driver_mpu9250.c:3964:9:mpu9250_set_addr_pin	2
 ../Core/Src/driver_mpu9250.c:3985:9:mpu9250_get_addr_pin	2
-../Core/Src/driver_mpu9250.c:4009:9:mpu9250_init	22
+../Core/Src/driver_mpu9250.c:4009:9:mpu9250_init	20
 ../Core/Src/driver_mpu9250.c:4168:9:mpu9250_deinit	5
 ../Core/Src/driver_mpu9250.c:4223:9:mpu9250_read	41
 ../Core/Src/driver_mpu9250.c:4631:9:mpu9250_read_temperature	4
