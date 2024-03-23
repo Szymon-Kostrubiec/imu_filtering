@@ -1,0 +1,3 @@
+[submodule "data/broad"]
+	path = data/broad
+	url = git@github.com:dlaidig/broad.git
